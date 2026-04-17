@@ -1,0 +1,26 @@
+.card {
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadowSm);
+  overflow: hidden;
+}
+
+.header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(2, 6, 23, 0.02);
+}
+
+.title {
+  font-weight: 700;
+  color: var(--textStrong);
+}
+
+.body {
+  padding: 16px;
+}
+
