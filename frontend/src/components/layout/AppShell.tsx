@@ -4,6 +4,7 @@ import styles from './AppShell.module.css';
 import { Button } from '../ui/Button';
 import { authService } from '../../services/auth.service';
 import { useAuth } from '../../app/auth';
+import { QuickAddWidget } from '../ai/QuickAddWidget';
 
 const navItems: Array<{ to: string; label: string }> = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -18,13 +19,13 @@ export function AppShell() {
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <div className={styles.brand}>
+        <NavLink to="/" className={styles.brand}>
           <div className={styles.logo} aria-hidden="true" />
           <div>
             <div className={styles.title}>Finance</div>
             <div className={styles.subtitle}>Manager</div>
           </div>
-        </div>
+        </NavLink>
 
         <nav className={styles.nav}>
           {navItems.map((item) => (
@@ -61,6 +62,7 @@ export function AppShell() {
         <div className={styles.content}>
           <Outlet />
         </div>
+        <QuickAddWidget />
       </main>
     </div>
   );

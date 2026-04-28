@@ -1,0 +1,356 @@
+.wrap {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 80;
+}
+
+.fab {
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: white;
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.14);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-weight: 900;
+  color: rgba(15, 23, 42, 0.9);
+  font-size: 18px;
+}
+
+.fab:hover {
+  box-shadow: 0 22px 46px rgba(2, 6, 23, 0.18);
+}
+
+.panel {
+  position: absolute;
+  right: 0;
+  bottom: 72px;
+  width: min(390px, calc(100vw - 36px));
+  height: min(78vh, 760px);
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(2, 6, 23, 0.92);
+  box-shadow: 0 22px 60px rgba(2, 6, 23, 0.18);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.head {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.title {
+  font-weight: 900;
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.close {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.55);
+  cursor: pointer;
+  color: rgba(248, 250, 252, 0.9);
+}
+
+.body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+
+.textBox {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  outline: none;
+  background: rgba(15, 23, 42, 0.55);
+  color: rgba(248, 250, 252, 0.92);
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.textBox:focus {
+  border-color: rgba(147, 51, 234, 0.55);
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.18);
+}
+
+.messages {
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+  padding-right: 2px;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.messages::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.menuDock {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.45);
+  padding: 6px 8px;
+}
+
+.pickCategoryHead {
+  margin-bottom: 8px;
+  padding: 4px 2px 2px;
+}
+
+.pickCategoryTitle {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: rgba(248, 250, 252, 0.96);
+  white-space: pre-line;
+}
+
+.pickCategorySub {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.msgRow {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.msgRowUser {
+  justify-content: flex-end;
+}
+
+.msgRowBot {
+  justify-content: flex-start;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.bubble {
+  border-radius: 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  line-height: 1.5;
+  font-size: 17px;
+  color: rgba(248, 250, 252, 0.92);
+  max-width: 78%;
+  white-space: pre-line;
+}
+
+.menuTitle {
+  font-weight: 800;
+}
+
+.menuRow {
+  margin-top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.45);
+  color: rgba(248, 250, 252, 0.92);
+  font-weight: 800;
+  cursor: pointer;
+  font-size: 14px;
+  height: 30px;
+  padding: 0 10px;
+}
+
+.chip:hover {
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.decisionRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bubbleUser {
+  background: rgba(147, 51, 234, 0.92);
+  border-color: rgba(147, 51, 234, 0.92);
+}
+
+.bubbleBot {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: 1fr 96px;
+  gap: 8px;
+  align-items: end;
+}
+
+.checklist {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(2, 6, 23, 0.4);
+}
+
+.checkTitle {
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.checkValue {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.valueSelect,
+.valueInput {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.valueInput:focus,
+.valueSelect:focus {
+  border-color: rgba(147, 51, 234, 0.55);
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.18);
+}
+
+.btn {
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  cursor: pointer;
+  font-weight: 800;
+  color: rgba(248, 250, 252, 0.92);
+}
+
+@media (max-width: 520px) {
+  .wrap {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .panel {
+    bottom: 70px;
+    width: calc(100vw - 24px);
+  }
+}
+
+.btnPrimary {
+  background: rgba(37, 99, 235, 0.92);
+  border-color: rgba(37, 99, 235, 0.92);
+  color: white;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.error {
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: rgba(127, 29, 29, 0.95);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.checklist {
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: white;
+  overflow: hidden;
+}
+
+.checkRow {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  align-items: start;
+}
+
+.checkRow:first-child {
+  border-top: none;
+}
+
+.checkTitle {
+  font-weight: 800;
+  color: rgba(15, 23, 42, 0.9);
+}
+
+.checkValue {
+  margin-top: 2px;
+  font-size: 17px;
+  color: rgba(15, 23, 42, 0.78);
+  line-height: 1.35;
+}
+
+.valueSelect {
+  width: 100%;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  padding: 0 12px;
+  background: white;
+  outline: none;
+  font-size: 17px;
+}
+
+.valueInput {
+  width: 100%;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  padding: 0 12px;
+  background: white;
+  outline: none;
+  font-size: 17px;
+}
+
+.valueInput:focus,
+.valueSelect:focus {
+  border-color: rgba(37, 99, 235, 0.5);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+

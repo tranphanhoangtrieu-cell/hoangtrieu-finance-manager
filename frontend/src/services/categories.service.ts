@@ -1,42 +1,54 @@
 import type { Category } from '../features/categories/types';
+import { authService } from './auth.service';
 
-let categories: Category[] = [
-  { id: 'c1', name: 'Ăn uống', color: '#f97316' },
-  { id: 'c2', name: 'Di chuyển', color: '#0ea5e9' },
-  { id: 'c3', name: 'Giải trí', color: '#a855f7' },
-  { id: 'c4', name: 'Tiết kiệm', color: '#22c55e' },
-];
+const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? 'http://localhost:8000/api';
 
-function randomId() {
-  return Math.random().toString(16).slice(2);
+async function api<T>(path: string, init: RequestInit): Promise<T> {
+  const token = authService.getAccessToken();
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: {
+      'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(init.headers ?? {}),
+    },
+  });
+
+  const text = await res.text();
+  const data = text ? (JSON.parse(text) as any) : null;
+
+  if (!res.ok) {
+    const message = typeof data?.message === 'string' ? data.message : 'Có lỗi xảy ra.';
+    throw new Error(message);
+  }
+
+  return data as T;
 }
 
 export const categoriesService = {
-  list(): Category[] {
-    return [...categories];
+  async list(): Promise<Category[]> {
+    const payload = await api<{ items: Category[] }>('/categories', { method: 'GET' });
+    return payload.items;
   },
 
-  create(input: { name: string; color: string }): Category {
-    const next: Category = { id: randomId(), name: input.name.trim(), color: input.color };
-    categories = [next, ...categories];
-    return next;
+  async create(input: { name: string; color: string }): Promise<Category> {
+    const payload = await api<{ item: Category }>('/categories', {
+      method: 'POST',
+      body: JSON.stringify({ name: input.name, color: input.color }),
+    });
+    return payload.item;
   },
 
-  update(id: string, patch: { name?: string; color?: string }): Category | null {
-    const idx = categories.findIndex((c) => c.id === id);
-    if (idx === -1) return null;
-    const curr = categories[idx];
-    const next: Category = {
-      ...curr,
-      name: patch.name ?? curr.name,
-      color: patch.color ?? curr.color,
-    };
-    categories = categories.map((c) => (c.id === id ? next : c));
-    return next;
+  async update(id: string, patch: { name?: string; color?: string }): Promise<Category> {
+    const payload = await api<{ item: Category }>(`/categories/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    });
+    return payload.item;
   },
 
-  remove(id: string): void {
-    categories = categories.filter((c) => c.id !== id);
+  async remove(id: string): Promise<void> {
+    await api<null>(`/categories/${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
 };
 

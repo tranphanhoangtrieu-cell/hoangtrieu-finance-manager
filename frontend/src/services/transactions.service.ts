@@ -1,65 +1,81 @@
 import type { Transaction, TransactionType } from '../features/transactions/types';
+import { authService } from './auth.service';
 
-let transactions: Transaction[] = [
-  {
-    id: 't1',
-    type: 'expense',
-    amount: 50000,
-    categoryId: 'c1',
-    note: 'Ăn sáng',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 't2',
-    type: 'expense',
-    amount: 120000,
-    categoryId: 'c2',
-    note: 'Đổ xăng',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 't3',
-    type: 'income',
-    amount: 2000000,
-    categoryId: 'c4',
-    note: 'Lương part-time',
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-  },
-];
+const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? 'http://localhost:8000/api';
 
-function randomId() {
-  return Math.random().toString(16).slice(2);
+async function api<T>(path: string, init: RequestInit): Promise<T> {
+  const token = authService.getAccessToken();
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: {
+      'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(init.headers ?? {}),
+    },
+  });
+
+  const text = await res.text();
+  const data = text ? (JSON.parse(text) as any) : null;
+  if (!res.ok) {
+    const message = typeof data?.message === 'string' ? data.message : 'Có lỗi xảy ra.';
+    throw new Error(message);
+  }
+  return data as T;
+}
+
+const listeners = new Set<() => void>();
+
+function emit() {
+  listeners.forEach((fn) => fn());
 }
 
 export const transactionsService = {
-  list(): Transaction[] {
-    return [...transactions];
+  subscribe(listener: () => void): () => void {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
   },
 
-  create(input: { type: TransactionType; amount: number; categoryId: string; note: string }): Transaction {
-    const next: Transaction = {
-      id: randomId(),
-      type: input.type,
-      amount: input.amount,
-      categoryId: input.categoryId,
-      note: input.note.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    transactions = [next, ...transactions];
-    return next;
+  async list(): Promise<Transaction[]> {
+    const payload = await api<{ items: Transaction[] }>('/transactions', { method: 'GET' });
+    return payload.items;
   },
 
-  update(id: string, patch: { note?: string }): Transaction | null {
-    const idx = transactions.findIndex((t) => t.id === id);
-    if (idx === -1) return null;
-    const curr = transactions[idx];
-    const next: Transaction = { ...curr, note: patch.note ?? curr.note };
-    transactions = transactions.map((t) => (t.id === id ? next : t));
-    return next;
+  async create(input: {
+    type: TransactionType;
+    amount: number;
+    categoryId: string;
+    note: string;
+    createdAt?: string; // yyyy-mm-dd
+  }): Promise<Transaction> {
+    const payload = await api<{ item: Transaction }>('/transactions', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    emit();
+    return payload.item;
   },
 
-  remove(id: string): void {
-    transactions = transactions.filter((t) => t.id !== id);
+  async update(
+    id: string,
+    patch: {
+      type?: TransactionType;
+      amount?: number;
+      categoryId?: string;
+      note?: string;
+      createdAt?: string; // yyyy-mm-dd
+    },
+  ): Promise<Transaction> {
+    const payload = await api<{ item: Transaction }>(`/transactions/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    });
+    emit();
+    return payload.item;
+  },
+
+  async remove(id: string): Promise<void> {
+    await api<null>(`/transactions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    emit();
   },
 };
 
