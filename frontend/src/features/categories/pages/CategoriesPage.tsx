@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -21,16 +21,37 @@ function dotClassFromColor(color: string): string {
 }
 
 export function CategoriesPage() {
-  const [items, setItems] = useState<Category[]>(categoriesService.list());
+  const [items, setItems] = useState<Category[]>([]);
   const [name, setName] = useState('');
   const [color, setColor] = useState('#2563eb');
   const canSubmit = useMemo(() => name.trim().length > 0, [name]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function reload() {
+    setError('');
+    setLoading(true);
+    try {
+      setItems(await categoriesService.list());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không tải được danh mục.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={styles.grid}>
       <Card title="Danh mục">
+        {error ? <div className={styles.error}>{error}</div> : null}
+        {loading && items.length === 0 ? <div className={styles.loading}>Đang tải...</div> : null}
         <div className={styles.list}>
           {items.map((c) => (
             <div key={c.id} className={styles.row}>
@@ -52,11 +73,16 @@ export function CategoriesPage() {
                   <>
                     <Button
                       variant="secondary"
-                      onClick={() => {
+                      onClick={async () => {
                         const next = editingName.trim();
                         if (next.length === 0) return;
-                        categoriesService.update(c.id, { name: next });
-                        setItems(categoriesService.list());
+                        setError('');
+                        try {
+                          await categoriesService.update(c.id, { name: next });
+                          await reload();
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : 'Không lưu được.');
+                        }
                         setEditingId(null);
                         setEditingName('');
                       }}
@@ -86,12 +112,17 @@ export function CategoriesPage() {
                 )}
                 <Button
                   variant="danger"
-                  onClick={() => {
-                    categoriesService.remove(c.id);
-                    setItems(categoriesService.list());
-                    if (editingId === c.id) {
-                      setEditingId(null);
-                      setEditingName('');
+                  onClick={async () => {
+                    setError('');
+                    try {
+                      await categoriesService.remove(c.id);
+                      await reload();
+                      if (editingId === c.id) {
+                        setEditingId(null);
+                        setEditingName('');
+                      }
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Không xoá được.');
                     }
                   }}
                 >
@@ -118,11 +149,16 @@ export function CategoriesPage() {
           </label>
           <Button
             disabled={!canSubmit}
-            onClick={() => {
+            onClick={async () => {
               if (!canSubmit) return;
-              categoriesService.create({ name, color });
-              setItems(categoriesService.list());
-              setName('');
+              setError('');
+              try {
+                await categoriesService.create({ name, color });
+                await reload();
+                setName('');
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'Không tạo được danh mục.');
+              }
             }}
           >
             Thêm

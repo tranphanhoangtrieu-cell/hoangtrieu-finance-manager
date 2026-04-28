@@ -1,8 +1,9 @@
 import { Card } from '../../../components/ui/Card';
 import { formatMoneyVnd } from '../../../lib/format';
 import { dashboardService, type RangeKey } from '../../../services/dashboard.service';
+import { transactionsService } from '../../../services/transactions.service';
 import styles from './DashboardPage.module.css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 function toHeightClass(value: number, maxValue: number): string {
   const pct = Math.max((value / maxValue) * 100, 6);
@@ -36,7 +37,8 @@ function ddMmYyyyToIso(text: string): string {
 }
 
 export function DashboardPage() {
-  const totals = dashboardService.getTotals();
+  const [totals, setTotals] = useState<{ income: number; expense: number; balance: number }>({ income: 0, expense: 0, balance: 0 });
+  const [totalsError, setTotalsError] = useState('');
   const [range, setRange] = useState<RangeKey>('week');
   const todayIso = useMemo(() => toIsoDate(new Date()), []);
   const last7Iso = useMemo(() => {
@@ -57,13 +59,84 @@ export function DashboardPage() {
   const fromDateIso = useMemo(() => ddMmYyyyToIso(fromDateText), [fromDateText]);
   const toDateIso = useMemo(() => ddMmYyyyToIso(toDateText), [toDateText]);
 
-  const stats = useMemo(() => {
-    if (!useFilter) return dashboardService.getStats(range);
-    return dashboardService.getStatsBetween(appliedFromIso, appliedToIso);
-  }, [appliedFromIso, appliedToIso, range, useFilter]);
+  const [stats, setStats] = useState<{ label: string; income: number; expense: number }[]>([]);
+  const [statsError, setStatsError] = useState('');
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const maxValue = useMemo(() => Math.max(...stats.flatMap((s) => [s.income, s.expense]), 1), [stats]);
   const [hovered, setHovered] = useState<null | { label: string; kind: 'income' | 'expense'; value: number; x: number }>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setTotalsError('');
+    void (async () => {
+      try {
+        const next = await dashboardService.getTotals();
+        if (cancelled) return;
+        setTotals(next);
+      } catch (err) {
+        if (cancelled) return;
+        setTotalsError(err instanceof Error ? err.message : 'Không tải được tổng quan.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    async function refreshAll() {
+      try {
+        setTotalsError('');
+        const nextTotals = await dashboardService.getTotals();
+        setTotals(nextTotals);
+      } catch (err) {
+        setTotalsError(err instanceof Error ? err.message : 'Không tải được tổng quan.');
+      }
+
+      try {
+        setStatsError('');
+        setStatsLoading(true);
+        const nextStats = !useFilter
+          ? await dashboardService.getStats(range)
+          : await dashboardService.getStatsBetween(appliedFromIso, appliedToIso);
+        setStats(nextStats);
+      } catch (err) {
+        setStats([]);
+        setStatsError(err instanceof Error ? err.message : 'Không tải được biểu đồ.');
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+
+    const unsub = transactionsService.subscribe(() => void refreshAll());
+    return unsub;
+  }, [appliedFromIso, appliedToIso, range, useFilter]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatsError('');
+    setStatsLoading(true);
+    void (async () => {
+      try {
+        const next = !useFilter
+          ? await dashboardService.getStats(range)
+          : await dashboardService.getStatsBetween(appliedFromIso, appliedToIso);
+        if (cancelled) return;
+        setStats(next);
+      } catch (err) {
+        if (cancelled) return;
+        setStats([]);
+        setStatsError(err instanceof Error ? err.message : 'Không tải được biểu đồ.');
+      } finally {
+        if (cancelled) return;
+        setStatsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [appliedFromIso, appliedToIso, range, useFilter]);
 
   function clearErrors() {
     setRangeError('');
@@ -213,6 +286,7 @@ export function DashboardPage() {
           </div>
         </Card>
       </div>
+      {totalsError ? <div className={styles.filterError}>{totalsError}</div> : null}
 
       <Card title="Biểu đồ thu/chi">
         <div className={styles.chartWrap}>
@@ -290,6 +364,7 @@ export function DashboardPage() {
             </button>
           </div>
           {rangeError !== '' && <div className={styles.filterError}>{rangeError}</div>}
+          {statsError !== '' && <div className={styles.filterError}>{statsError}</div>}
 
           <div className={styles.legend}>
             <span>
@@ -313,18 +388,23 @@ export function DashboardPage() {
             }
           >
             {tooltipText && <div className={styles.tooltip}>{tooltipText}</div>}
+            {statsLoading && stats.length === 0 ? <div className={styles.tooltip}>Đang tải...</div> : null}
             {stats.map((s) => (
               <div key={s.label} className={styles.barStack}>
-                <div
-                  className={[styles.bar, styles.income, toHeightClass(s.income, maxValue)].join(' ')}
-                  title={`Thu ${formatMoneyVnd(s.income)}`}
-                  onMouseEnter={(e) => onHoverIncome(s.label, s.income, e.currentTarget)}
-                />
-                <div
-                  className={[styles.bar, styles.expense, toHeightClass(s.expense, maxValue)].join(' ')}
-                  title={`Chi ${formatMoneyVnd(s.expense)}`}
-                  onMouseEnter={(e) => onHoverExpense(s.label, s.expense, e.currentTarget)}
-                />
+                {s.income > 0 ? (
+                  <div
+                    className={[styles.bar, styles.income, toHeightClass(s.income, maxValue)].join(' ')}
+                    title={`Thu ${formatMoneyVnd(s.income)}`}
+                    onMouseEnter={(e) => onHoverIncome(s.label, s.income, e.currentTarget)}
+                  />
+                ) : null}
+                {s.expense > 0 ? (
+                  <div
+                    className={[styles.bar, styles.expense, toHeightClass(s.expense, maxValue)].join(' ')}
+                    title={`Chi ${formatMoneyVnd(s.expense)}`}
+                    onMouseEnter={(e) => onHoverExpense(s.label, s.expense, e.currentTarget)}
+                  />
+                ) : null}
                 <div className={styles.barLabel}>{s.label}</div>
               </div>
             ))}

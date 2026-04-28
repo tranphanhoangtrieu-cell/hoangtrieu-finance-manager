@@ -7,13 +7,15 @@ import { authService } from '../../../services/auth.service';
 import styles from './AuthPage.module.css';
 
 export function RegisterPage() {
-  const [name, setName] = useState('Trần Phan Hoàng Triều');
-  const [email, setEmail] = useState('trieu@example.com');
-  const [password, setPassword] = useState('123456');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const disabled = useMemo(
-    () => name.trim() === '' || email.trim() === '' || password.trim() === '',
-    [name, email, password]
+    () => submitting || name.trim() === '' || email.trim() === '' || password.trim() === '',
+    [name, email, password, submitting],
   );
 
   return (
@@ -33,10 +35,18 @@ export function RegisterPage() {
 
             <form
               className={styles.form}
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                authService.register({ name, email, password });
-                navigate('/dashboard', { replace: true });
+                setError('');
+                setSubmitting(true);
+                try {
+                  await authService.register({ name, email, password });
+                  navigate('/dashboard', { replace: true });
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Đăng ký thất bại.');
+                } finally {
+                  setSubmitting(false);
+                }
               }}
             >
               <Input label="Họ tên" value={name} onChange={setName} labelClassName={styles.inputLabel} inputClassName={styles.inputPill} />
@@ -57,8 +67,10 @@ export function RegisterPage() {
                 inputClassName={styles.inputPill}
               />
 
+              {error ? <div className={styles.formError}>{error}</div> : null}
+
               <Button className={styles.primaryBtn} type="submit" disabled={disabled}>
-                Tạo tài khoản
+                {submitting ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
               </Button>
 
               <div className={styles.linksRow}>

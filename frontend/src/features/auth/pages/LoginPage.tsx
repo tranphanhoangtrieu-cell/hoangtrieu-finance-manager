@@ -7,9 +7,14 @@ import { authService } from '../../../services/auth.service';
 import styles from './AuthPage.module.css';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('trieu@example.com');
-  const [password, setPassword] = useState('123456');
-  const disabled = useMemo(() => email.trim() === '' || password.trim() === '', [email, password]);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const disabled = useMemo(
+    () => submitting || email.trim() === '' || password.trim() === '',
+    [email, password, submitting],
+  );
   const navigate = useNavigate();
 
   return (
@@ -27,10 +32,18 @@ export function LoginPage() {
 
             <form
               className={styles.form}
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                authService.login({ email, password });
-                navigate('/dashboard', { replace: true });
+                setError('');
+                setSubmitting(true);
+                try {
+                  await authService.login({ email, password });
+                  navigate('/dashboard', { replace: true });
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Đăng nhập thất bại.');
+                } finally {
+                  setSubmitting(false);
+                }
               }}
             >
               <Input
@@ -50,8 +63,10 @@ export function LoginPage() {
                 inputClassName={styles.inputPill}
               />
 
+              {error ? <div className={styles.formError}>{error}</div> : null}
+
               <Button className={styles.primaryBtn} type="submit" disabled={disabled}>
-                Đăng nhập
+                {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </Button>
 
               <div className={styles.linksRow}>
